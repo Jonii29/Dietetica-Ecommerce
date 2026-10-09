@@ -179,3 +179,11 @@ def test_same_presentation_with_new_or_missing_code_is_not_duplicated(admin):
     assert r["variants_created"] == 0 and r["variants_updated"] == 1
     p = admin.get("/api/products/pistachos").json()
     assert [(v["sku"], v["price"]) for v in p["variants"]] == [("NEW-9", 540000)]
+
+
+def test_csv_with_title_line_above_table(admin):
+    data = ("LISTA OCTUBRE\n\nCód.;Descripción;Precio Costo;Precio Público\nFRUTOS SECOS\n"
+            "A1;Almendras x 500 grs;5000;8.100\nA2;Almendras x 1 kg;9500;15.500\n").encode()
+    r = upload(admin, "lista.csv", data, dry_run=True)
+    assert r["errors"] == [] and r["variants_created"] == 2 and r["products_created"] == 1
+    assert r["sample"][0]["categoria"] == "Frutos Secos" and r["sample"][0]["precio_centavos"] == "810000"

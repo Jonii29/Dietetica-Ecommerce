@@ -186,11 +186,13 @@ def read_tables(data: bytes, filename: str) -> list[tuple[str, list[list[str]]]]
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError:
         text = data.decode("latin-1")
-    try:
-        dialect = csv.Sniffer().sniff(text[:4096], delimiters=",;\t|")
-    except csv.Error:
-        dialect = csv.excel
-    rows = [[c.strip() for c in r] for r in csv.reader(io.StringIO(text), dialect=dialect)]
+    # Separador: el que más aparece en las líneas con datos (el Sniffer se confunde con
+    # títulos sin separador arriba de la tabla)
+    lines = [ln for ln in text.splitlines()[:200] if ln.strip()]
+    counts = {d: sum(1 for ln in lines if d in ln) * 1000 + sum(ln.count(d) for ln in lines)
+              for d in (";", ",", "\t", "|")}
+    delim = max(counts, key=counts.get) if any(counts.values()) else ","
+    rows = [[c.strip() for c in r] for r in csv.reader(io.StringIO(text), delimiter=delim)]
     return [("", rows)]
 
 
