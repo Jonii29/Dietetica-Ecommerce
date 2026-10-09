@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* Tienda: diseño "Feria". Tinta ciruela, fondo blanco y un color por categoría. */
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-condensed: "Barlow Condensed", "Barlow", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #2e1a47;        /* texto principal, botones */
+  --color-ink-soft: #5e4e72;   /* texto secundario (contraste AA sobre blanco) */
+  --color-lilac: #f4eff8;      /* superficies suaves, campos */
+  --color-lilac-200: #e4daee;
+
+  /* Colores por categoría (texto ink encima, contraste > 7:1) */
+  --color-cat-ochre: #f2c14e;
+  --color-cat-wheat: #f7d9a8;
+  --color-cat-olive: #c7d36f;
+  --color-cat-lavender: #cdb4e8;
+  --color-cat-sky: #9fd0f0;
+  --color-cat-coral: #f59a83;
+
+  /* Panel de gestión (diseño "Lista"): se reasignan dentro de .admin-theme */
+  --color-brand-50: #eef2fd;
+  --color-brand-100: #dce4fb;
+  --color-brand-600: #2a4fd6;
+  --color-brand-700: #1f3fbf;
+  --color-brand-900: #142a85;
+  --color-highlight: #ffe45c;
+}
+
+/* Las tarjetas fuera de pantalla no se pintan: grillas largas siguen fluidas */
+.card-cv {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+/* Panel de gestión: grises fríos y Barlow, sin tocar cada componente */
+.admin-theme {
+  --color-stone-50: #f7f8fb;
+  --color-stone-100: #f2f4f8;
+  --color-stone-200: #e1e5ee;
+  --color-stone-300: #c5ccdc;
+  --color-stone-400: #9aa3ba;
+  --color-stone-500: #646d8a;
+  --color-stone-600: #4a5370;
+  --color-stone-700: #363e5a;
+  --color-stone-800: #252c45;
+  --color-stone-900: #141b33;
+  font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  color: var(--color-stone-900);
+}
+.admin-theme h1,
+.admin-theme h2 {
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+.admin-theme h1 { font-size: 2.25rem; line-height: 1.05; }
+.admin-theme h2 { font-size: 1.4rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Uso táctil (celular / tablet) ---------- */
+html {
+  -webkit-tap-highlight-color: transparent; /* sin el destello gris al tocar */
+  -webkit-text-size-adjust: 100%;
+}
+button, a, [role="button"], [role="radio"], label:has(> input[type="radio"]) {
+  touch-action: manipulation;  /* sin la espera de 300 ms por doble toque */
+}
+button, [role="button"], [role="radio"] {
+  -webkit-user-select: none;   /* mantener apretado no selecciona el texto del botón */
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (pointer: coarse), (max-width: 767px) {
+  /* iOS hace zoom al enfocar campos con letra menor a 16 px y no vuelve */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
+    font-size: max(16px, 1em) !important;
+  }
+  /* respuesta inmediata al tocar */
+  button:not(:disabled):active, a:active, [role="radio"]:active {
+    opacity: 0.72;
+  }
+}

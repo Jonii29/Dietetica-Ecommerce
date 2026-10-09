@@ -1,0 +1,21 @@
+sku;producto;nombre;marca;categoria;subcategoria;variante;tipo_venta;contenido;precio;precio_lista;stock;etiquetas;sinonimos;descripcion;imagen_url;activo;orden
+ALM-250;almendras-peladas;Almendras peladas;;Frutos Secos;;250 g;peso;250g;4.250;;;sin tacc|vegano;almendra|almonds;Almendras non pareil peladas, sin sal.;;si;
+ALM-500;almendras-peladas;Almendras peladas;;Frutos Secos;;500 g;peso;500g;8.100;;;sin tacc|vegano;;;;si;
+ALM-1000;almendras-peladas;Almendras peladas;;Frutos Secos;;1 kg;peso;1kg;15.500;16.900;;sin tacc|vegano;;;;si;
+NUE-250;nueces-mariposa;Nueces mariposa extra light;;Frutos Secos;;250 g;peso;250g;3.900;;;sin tacc|vegano;nuez;;;si;
+NUE-500;nueces-mariposa;Nueces mariposa extra light;;Frutos Secos;;500 g;peso;500g;7.400;;;sin tacc|vegano;;;;si;
+NUE-1000;nueces-mariposa;Nueces mariposa extra light;;Frutos Secos;;1 kg;peso;1kg;14.200;;;sin tacc|vegano;;;;si;
+CHIA-250;semillas-chia;Semillas de chía;;Semillas;;250 g;peso;250g;1.800;;;sin tacc|vegano|organico;chia|chía|salvia hispanica;Fuente de omega 3 y fibra.;;si;
+CHIA-500;semillas-chia;Semillas de chía;;Semillas;;500 g;peso;500g;3.300;;;sin tacc|vegano|organico;;;;si;
+QUI-500;quinoa-blanca;Quinoa blanca lavada;;Cereales;;500 g;peso;500g;3.600;;;sin tacc|vegano;quínoa|quinua;;;si;
+QUI-1000;quinoa-blanca;Quinoa blanca lavada;;Cereales;;1 kg;peso;1kg;6.900;;;sin tacc|vegano;;;;si;
+HAR-ALM-250;harina-almendras;Harina de almendras;;Harinas;Harinas sin TACC;250 g;peso;250g;5.200;;;sin tacc|vegano|keto;almond flour|harina almendra;Ideal para repostería keto.;;si;
+HAR-ALM-500;harina-almendras;Harina de almendras;;Harinas;Harinas sin TACC;500 g;peso;500g;9.900;;;sin tacc|vegano|keto;;;;si;
+HAR-INT-1000;harina-integral;Harina integral de trigo;;Harinas;Harinas de trigo;1 kg;peso;1kg;1.450;;;vegano|organico;harina integral fina;;;si;
+HAR-COCO-500;harina-coco-dicomere;Harina de coco;Dicomere;Harinas;Harinas sin TACC;Paquete 500 g;unidad;500g;4.800;;25;sin tacc|vegano|keto;coconut flour;;;si;
+MAN-CRE-380;mantequilla-mani-crunchy;Mantequilla de maní crunchy;Felices las Vacas;Untables;;Frasco 380 g;unidad;380g;5.600;;12;sin tacc|vegano|sin azucar;pasta de mani|peanut butter;;;si;
+STV-200;stevia-liquida;Stevia líquida;Dulri;Endulzantes;;Gotero 200 ml;unidad;200ml;3.200;;40;sin tacc|vegano|sin azucar|keto;edulcorante|endulzante;;;si;
+WHEY-1000;proteina-whey-vainilla;Proteína whey sabor vainilla;ENA;Suplementos;Proteínas;Pote 1 kg;unidad;1kg;38.500;42.000;6;sin tacc;proteina|whey protein;;;si;
+CREA-300;creatina-monohidrato;Creatina monohidrato;Star Nutrition;Suplementos;Rendimiento;Pote 300 g;unidad;300g;27.900;;0;sin tacc|vegano;creatine;;;si;
+GAL-ARR-1;galletas-arroz-integral;Galletas de arroz integral;Gallo;Galletitas;;Paquete;unidad;1 u;1.150;;30;sin tacc|vegano;tortitas de arroz;;;si;
+MIX-250;mix-frutos-secos;Mix de frutos secos premium;;Frutos Secos;;250 g;peso;250g;4.600;;;sin tacc|vegano;mix|trail mix;Almendras, nueces, castañas y pasas.;;si;

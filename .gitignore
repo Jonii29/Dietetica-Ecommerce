@@ -1,0 +1,7 @@
+node_modules/
+.next/
+*.db
+*.db-*
+__pycache__/
+.env.local
+.env

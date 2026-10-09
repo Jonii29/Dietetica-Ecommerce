@@ -1,0 +1,77 @@
+# Blueprint de Render: crea la base PostgreSQL, el backend (FastAPI) y la tienda (Next.js).
+# En Render: New > Blueprint > elegí este repositorio. Te va a pedir los valores marcados con sync: false.
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: dietetica-db
+    plan: free            # gratis 30 días; para la tienda real pasalo a "basic-256mb"
+    databaseName: dietetica
+    user: dietetica
+
+services:
+  # ---------- Backend: API + panel de gestión ----------
+  - type: web
+    name: dietetica-api
+    runtime: python
+    rootDir: backend
+    plan: free            # se duerme tras 15 min sin uso; "starter" lo mantiene despierto
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dietetica-db
+          property: connectionString
+      - key: STORE_NAME
+        value: Dietética
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD        # crea el usuario del panel en el primer arranque
+        sync: false
+      - key: WHATSAPP_NUMBER       # 549 + área + número, sin "+" ni espacios
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: PUBLIC_SITE_URL       # host de la tienda (se completa con https://)
+        fromService:
+          type: web
+          name: dietetica-web
+          property: host
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: dietetica-web
+          property: host
+      - key: PUBLIC_API_URL
+        fromService:
+          type: web
+          name: dietetica-api
+          property: host
+      - key: MP_ACCESS_TOKEN       # opcional: Mercado Pago
+        sync: false
+      - key: MP_WEBHOOK_SECRET     # opcional: Mercado Pago
+        sync: false
+
+  # ---------- Tienda (Next.js) ----------
+  - type: web
+    name: dietetica-web
+    runtime: node
+    rootDir: frontend
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: API_HOST              # el frontend reenvía /api/* a este backend
+        fromService:
+          type: web
+          name: dietetica-api
+          property: host
+      - key: NEXT_PUBLIC_STORE_NAME
+        value: Dietética
+      - key: NEXT_PUBLIC_WHATSAPP_NUMBER   # mismo número que WHATSAPP_NUMBER
+        sync: false
