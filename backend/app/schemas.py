@@ -156,3 +156,5 @@ class ImportResult(BaseModel):
     variants_updated: int
     variants_deactivated: int
     errors: list[dict]
+    detected: dict | None = None        # cómo se interpretó el archivo (columnas, hojas, avisos)
+    sample: list[dict] = []             # primeras filas ya interpretadas

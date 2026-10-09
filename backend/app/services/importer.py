@@ -21,8 +21,6 @@ Comportamiento
 """
 from __future__ import annotations
 
-import csv
-import io
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field
 
@@ -34,6 +32,7 @@ from ..utils.text import (
     content_label, parse_bool, parse_content, parse_price_to_cents, slugify, split_list,
 )
 from .search import build_search_text
+from .sheet_reader import ParsedSheet, finalize_skus, parse_tables, read_tables
 
 REQUIRED_COLUMNS = ["sku", "nombre", "categoria", "precio"]
 OPTIONAL_COLUMNS = [
@@ -92,43 +91,18 @@ class ImportReport:
 # Lectura de archivos
 # ---------------------------------------------------------------------------
 
-def _clean_header(h: str) -> str:
-    key = (h or "").strip().lower().replace(" ", "_")
-    return HEADER_ALIASES.get(key, key)
+def read_catalog_file(data: bytes, filename: str, columns: dict[int, str] | None = None) -> ParsedSheet:
+    """Lee cualquier lista de precios (xlsx, xls, csv, pdf) y la lleva a filas de la plantilla.
+
+    `columns` permite corregir desde el panel qué columna es cada campo ({índice: campo}).
+    """
+    parsed = parse_tables(read_tables(data, filename), override=columns)
+    finalize_skus(parsed.rows)
+    return parsed
 
 
 def read_rows(data: bytes, filename: str) -> list[dict[str, str]]:
-    """Lee CSV (`,` o `;`, UTF-8 con/sin BOM o Latin-1) o XLSX y devuelve dicts con headers normalizados."""
-    name = filename.lower()
-    if name.endswith((".xlsx", ".xlsm")):
-        from openpyxl import load_workbook  # import diferido: solo si se usa Excel
-
-        wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
-        ws = wb.active
-        it = ws.iter_rows(values_only=True)
-        headers = [_clean_header(str(h or "")) for h in next(it)]
-        rows = [
-            {headers[i]: ("" if v is None else str(v).strip()) for i, v in enumerate(r) if i < len(headers)}
-            for r in it if any(v not in (None, "") for v in r)
-        ]
-        wb.close()
-        return rows
-
-    try:
-        text = data.decode("utf-8-sig")
-    except UnicodeDecodeError:
-        text = data.decode("latin-1")  # Excel en Windows suele exportar así
-    sample = text[:4096]
-    try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
-    except csv.Error:
-        dialect = csv.excel
-    reader = csv.DictReader(io.StringIO(text), dialect=dialect)
-    reader.fieldnames = [_clean_header(h) for h in (reader.fieldnames or [])]
-    return [
-        {k: (v or "").strip() for k, v in row.items() if k}
-        for row in reader if any((v or "").strip() for v in row.values() if isinstance(v, str))
-    ]
+    return read_catalog_file(data, filename).rows
 
 
 # ---------------------------------------------------------------------------
@@ -175,15 +149,21 @@ def _validate(row: dict[str, str]) -> dict:
 
     quantity, unit = parse_content(row.get("contenido"))
     sale_raw = (row.get("tipo_venta") or "").lower()
-    if sale_raw in ("peso", "granel", "fraccionado", "suelto"):
+    if sale_raw in ("peso", "granel", "fraccionado", "suelto", "kg", "kilo", "por kilo", "x kg"):
         sale_type = SaleType.WEIGHT
-    elif sale_raw in ("", "unidad", "envasado", "u"):
+    elif sale_raw in ("", "unidad", "envasado", "u", "un", "unid", "paquete"):
         sale_type = SaleType.UNIT
     else:
         raise ValueError(f"tipo_venta inválido: {sale_raw!r} (peso | unidad)")
 
     stock_raw = row.get("stock", "")
     return {
+        # Qué trae el archivo: lo que no trae se conserva tal como está en la tienda
+        "has": {k for k in ("stock", "precio_lista", "marca", "sinonimos", "descripcion", "activo")
+                if k in row},
+        "sku_auto": "_sku_auto" in row,
+        "tags_complete": "_etiquetas_completas" in row or "_line" not in row,
+        "category_default": "_categoria_por_defecto" in row,
         "sku": row["sku"].strip().upper(),
         "product_key": slugify(row.get("producto") or f"{row['nombre']} {row.get('marca', '')}"),
         "name": row["nombre"].strip(),
@@ -220,7 +200,8 @@ def import_catalog(
     # 1) Validar y agrupar por producto (manteniendo el orden del archivo)
     groups: OrderedDict[str, list[dict]] = OrderedDict()
     seen_skus: set[str] = set()
-    for line, raw in enumerate(rows, start=2):  # línea 1 = encabezado
+    for pos, raw in enumerate(rows, start=2):  # línea 1 = encabezado
+        line = int(raw["_line"]) if raw.get("_line") else pos
         try:
             r = _validate(raw)
             if r["sku"] in seen_skus:
@@ -239,11 +220,14 @@ def import_catalog(
     # 2) Upsert producto + variantes
     for key, items in groups.items():
         head = items[0]
-        cat = cache.category(head["category"])
-        if head["subcategory"]:
-            cat = cache.category(head["subcategory"], parent=cat)
-
         product = cache.products.get(key)
+        if head["category_default"] and product is not None and product.category is not None:
+            cat = product.category  # la lista no dice el rubro: queda el que ya tenía
+        else:
+            cat = cache.category(head["category"])
+            if head["subcategory"]:
+                cat = cache.category(head["subcategory"], parent=cat)
+
         if product is None:
             product = Product(slug=key, name=head["name"])
             db.add(product)
@@ -256,17 +240,34 @@ def import_catalog(
         def first(field_: str):
             return next((it[field_] for it in items if it[field_]), None)
 
+        has = head["has"]
         product.name = head["name"]
-        product.brand = first("brand")
+        if "marca" in has or product.id is None:
+            product.brand = first("brand")
         product.category = cat
         product.description = first("description") or product.description
         product.image_url = first("image_url") or product.image_url
-        product.synonyms = first("synonyms")
+        if "sinonimos" in has:
+            product.synonyms = first("synonyms")
         tag_slugs = list(dict.fromkeys(t for it in items for t in it["tags"]))
-        product.tags = list({id(t): t for t in (cache.tag(s) for s in tag_slugs)}.values())
+        new_tags = [cache.tag(s) for s in tag_slugs]
+        if not head["tags_complete"]:
+            new_tags = list(product.tags or []) + new_tags  # suma lo detectado, no borra lo cargado
+        product.tags = list({id(t): t for t in new_tags}.values())
 
         for pos, it in enumerate(items):
             v = cache.variants.get(it["sku"])
+            if v is None and product.id is not None:
+                # Misma presentación de un producto que ya existe, con otro código o sin código:
+                # se actualiza esa en vez de duplicarla.
+                v = next((x for x in product.variants
+                          if slugify(x.label) == slugify(it["label"]) and x.sku not in seen_skus), None)
+                if v is not None:
+                    if not it["sku_auto"] and it["sku"] not in cache.variants:
+                        cache.variants.pop(v.sku, None)   # la lista trae un código nuevo: se adopta
+                        v.sku = it["sku"]
+                        cache.variants[v.sku] = v
+                    seen_skus.add(v.sku)
             if v is None:
                 v = Variant(sku=it["sku"])
                 db.add(v)
@@ -277,8 +278,12 @@ def import_catalog(
             v.product = product
             v.label, v.sale_type = it["label"], it["sale_type"]
             v.quantity, v.unit = it["quantity"], it["unit"]
-            v.price, v.compare_at_price = it["price"], it["compare_at_price"]
-            v.stock, v.is_active = it["stock"], it["is_active"]
+            v.price = it["price"]
+            if "precio_lista" in it["has"] or v.id is None:
+                v.compare_at_price = it["compare_at_price"]
+            if "stock" in it["has"] or v.id is None:
+                v.stock = it["stock"]
+            v.is_active = it["is_active"]
             v.sort_order = it["sort_order"] if it["sort_order"] is not None else pos
         touched_products.append(product)
 

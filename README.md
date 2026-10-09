@@ -115,7 +115,25 @@ catalog_meta (id=1, version)
 
 Para producción conviene sumar Alembic para las migraciones.
 
-## 2. Plantilla de importación
+## 2. Importar listas de precios
+
+Desde **/admin → Importar** se sube la lista **tal como esté**: Excel (`.xlsx`, `.xls`), CSV o el PDF
+del proveedor. No hace falta usar la plantilla (`backend/app/services/sheet_reader.py`):
+
+* Busca la fila de encabezados aunque arriba haya logo, título o fecha.
+* Reconoce columnas con otros nombres: *Descripción / Artículo* → nombre, *P. Venta / Precio público*
+  → precio (ignora *Costo*, *Mayorista*, *Sin IVA*), *Rubro / Familia* → categoría, *Cód.* → SKU, etc.
+* Filas de sección (`FRUTOS SECOS` sin precio) y hojas del Excel se usan como categoría.
+* Del nombre saca la presentación (`Almendras x 500 grs` → producto *Almendras*, 500 g; las
+  presentaciones del mismo producto se agrupan) y etiquetas (*sin TACC, vegano, orgánico, keto, sin azúcar*).
+  `Precio x kg` o *granel* → venta por peso.
+* Sin códigos: genera uno estable por nombre + presentación, así la próxima lista actualiza precios
+  en vez de duplicar. Si el proveedor cambia el código, se reconoce la misma presentación.
+* Lo que la lista no trae (stock, marca, rubro, etiquetas) se conserva como estaba.
+* La vista previa muestra cómo entendió cada columna y los primeros productos; si algo quedó mal se
+  cambia la columna y se vuelve a revisar. Nada se guarda hasta confirmar.
+
+### Plantilla (opcional)
 
 Archivo: `backend/data/plantilla_productos.csv` (separador `;`, también acepta `,` y `.xlsx`).
 **Una fila por variante (SKU)**: las filas con el mismo `producto` forman un solo producto.

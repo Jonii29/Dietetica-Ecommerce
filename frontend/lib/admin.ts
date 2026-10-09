@@ -136,6 +136,17 @@ export interface ImportReport {
   variants_updated: number;
   variants_deactivated: number;
   errors: { line: number | null; sku: string | null; error: string }[];
+  detected?: ImportDetected | null;
+  sample?: Record<string, string>[];
+}
+
+export interface ImportDetected {
+  sheets: string[];
+  header_row: number | null;
+  notes: string[];
+  skipped: number;
+  columns: { index: number; header: string; field: string | null; examples: string[] }[];
+  fields: Record<string, string>;
 }
 
 export const STATUS: Record<OrderStatus, { label: string; tone: string }> = {

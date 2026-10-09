@@ -7,7 +7,9 @@ import math
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+import json
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -22,10 +24,11 @@ from ..models import Category, Order, OrderItem, OrderStatus, Product, Tag, TagK
 from ..schemas import ImportResult
 from ..security import require_admin
 from ..services.catalog import bump_catalog_version, catalog_store
-from ..services.importer import DIETARY_TAGS, TEMPLATE_COLUMNS, import_catalog, read_rows
+from ..services.importer import DIETARY_TAGS, TAG_ALIASES, TEMPLATE_COLUMNS, import_catalog, read_catalog_file
+from ..services.sheet_reader import FIELD_LABELS
 from ..services.orders import SOLD_STATUSES, set_status
 from ..services.search import build_search_text
-from ..utils.text import normalize, slugify
+from ..utils.text import content_label, normalize, parse_content, parse_price_to_cents, slugify, split_list
 
 settings = get_settings()
 MAX_UPLOAD = 10 * 1024 * 1024  # 10 MB
@@ -340,7 +343,8 @@ def stats(days: int = Query(30, ge=1, le=365), db: Session = Depends(get_db)):
 
 @router.post("/import", response_model=ImportResult)
 async def import_products(
-    file: UploadFile = File(..., description="CSV (; o ,) o XLSX"),
+    file: UploadFile = File(..., description="Excel (.xlsx/.xls), CSV o PDF con la lista de precios"),
+    columns: str | None = Form(None, description='Corrección de columnas: {"0": "sku", "2": "precio"}'),
     sync: bool = Query(False, description="Desactiva SKUs que no estén en el archivo"),
     dry_run: bool = Query(False, description="Solo valida, no guarda"),
     strict: bool = Query(False, description="Aborta todo si alguna fila tiene error"),
@@ -349,14 +353,46 @@ async def import_products(
     data = await file.read()
     if len(data) > MAX_UPLOAD:
         raise HTTPException(413, "El archivo supera los 10 MB.")
+    override = None
+    if columns:
+        try:
+            override = {int(k): (v or None) for k, v in json.loads(columns).items()}
+        except (ValueError, AttributeError) as exc:
+            raise HTTPException(400, "Formato de columnas inválido.") from exc
+        bad = {v for v in override.values() if v and v not in FIELD_LABELS}
+        if bad:
+            raise HTTPException(400, f"Campo desconocido: {', '.join(sorted(bad))}")
     try:
-        rows = read_rows(data, file.filename or "upload.csv")
+        parsed = read_catalog_file(data, file.filename or "upload.csv", override)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     except Exception as exc:  # archivo corrupto / formato desconocido
-        raise HTTPException(400, f"No se pudo leer el archivo: {exc}") from exc
-    report = import_catalog(db, rows, sync=sync, dry_run=dry_run, strict=strict)
+        raise HTTPException(400, f"No se pudo leer el archivo. Probá guardarlo como Excel (.xlsx). ({exc})") from exc
+    report = import_catalog(db, parsed.rows, sync=sync, dry_run=dry_run, strict=strict)
     if not report.dry_run:
         catalog_store.ensure_fresh(db, force=True)
-    return report.to_dict()
+    out = report.to_dict()
+    out["detected"] = parsed.summary()
+    out["sample"] = [_sample_row(r) for r in parsed.rows[:8]]
+    return out
+
+
+def _sample_row(r: dict[str, str]) -> dict[str, str]:
+    row = {k: r.get(k, "") for k in ("sku", "nombre", "marca", "categoria", "contenido", "precio", "etiquetas")}
+    try:
+        row["precio_centavos"] = str(parse_price_to_cents(r.get("precio")))
+    except ValueError:
+        row["precio_centavos"] = ""
+    try:
+        row["contenido"] = r.get("variante") or (content_label(*parse_content(r["contenido"])) if r.get("contenido") else "")
+    except ValueError:
+        pass
+    names = []
+    for t in split_list(r.get("etiquetas")):
+        slug = TAG_ALIASES.get(slugify(t), slugify(t))
+        names.append(DIETARY_TAGS.get(slug, (t.strip().capitalize(),))[0])
+    row["etiquetas"] = "|".join(names)
+    return row
 
 
 @router.get("/import/template", response_class=PlainTextResponse)
