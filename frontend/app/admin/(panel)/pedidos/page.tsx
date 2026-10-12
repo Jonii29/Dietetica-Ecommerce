@@ -163,7 +163,7 @@ export default function OrdersPage() {
                       ))}
                       {phone && (
                         <a href={`https://wa.me/${phone}?text=${encodeURIComponent(`Hola ${o.customer_name}, te escribimos por tu pedido ${o.code}.`)}`}
-                          target="_blank" rel="noreferrer" className="flex min-h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-semibold text-[#0E6E5C] ring-1 ring-[#25D366]/50 hover:bg-[#25D366]/10">
+                          target="_blank" rel="noreferrer" className="flex min-h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50">
                           <MessageCircle size={15} /> Escribirle
                         </a>
                       )}

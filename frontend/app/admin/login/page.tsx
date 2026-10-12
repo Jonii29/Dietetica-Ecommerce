@@ -102,131 +102,121 @@ function LoginForm() {
     }
   }
 
+  const field = "block h-12 w-full border-0 border-b-[3px] border-[var(--chalk)] bg-black/10 px-2 text-[18px] text-[var(--chalk)] outline-none transition-colors focus:border-[var(--chalk-yellow)] focus:bg-black/20";
+
   return (
-    <div className="w-full max-w-[400px]">
-      <h1 className="leading-none text-stone-900">Iniciar sesión</h1>
-      <p className="mt-2 text-[15px] text-stone-500">Entrá con el usuario del panel.</p>
+    <div className="w-full rounded-2xl border-[3px] border-dashed border-[rgb(244_241_230/0.5)] px-5 py-7 sm:px-8 sm:py-9">
+      <h1 className="text-[46px] leading-none">Iniciar sesión</h1>
 
       {notice && !error && (
-        <p role="status" className="mt-5 flex items-start gap-2 rounded-lg bg-brand-50 px-3 py-2.5 text-sm text-brand-900">
-          <Info size={17} className="mt-px shrink-0" aria-hidden /> {notice}
+        <p role="status" className="mt-4 flex items-start gap-2 rounded-lg bg-black/20 px-3 py-2.5 text-[15px] text-[var(--chalk)]">
+          <Info size={17} className="mt-0.5 shrink-0 text-[var(--chalk-yellow)]" aria-hidden /> {notice}
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-5 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2.5 text-sm text-red-800">
-          <CircleAlert size={17} className="mt-px shrink-0" aria-hidden /> {error}
+        <p role="alert" className="mt-4 flex items-start gap-2 rounded-lg border-2 border-dashed border-[#f2a38f] px-3 py-2.5 text-[15px] text-[#f8c7ba]">
+          <CircleAlert size={17} className="mt-0.5 shrink-0" aria-hidden /> {error}
         </p>
       )}
 
-      <form onSubmit={submit} className="mt-6 space-y-5" noValidate={false}>
+      <form onSubmit={submit} className="mt-5 space-y-5 font-[family-name:var(--font-hand)]">
         <div>
-          <label htmlFor="username" className="text-sm font-semibold text-stone-700">Usuario</label>
+          <label htmlFor="username" className="text-[19px]">Usuario</label>
           <input
             ref={userRef} id="username" name="username" autoComplete="username" autoCapitalize="none"
             autoCorrect="off" spellCheck={false} required value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="mt-1.5 block h-12 w-full rounded-lg border border-stone-300 bg-white px-3.5 text-[16px] outline-none transition-[border-color,box-shadow] focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+            onChange={(e) => setUsername(e.target.value)} className={`mt-1 ${field}`}
           />
         </div>
 
         <div>
           <div className="flex items-baseline justify-between gap-3">
-            <label htmlFor="password" className="text-sm font-semibold text-stone-700">Contraseña</label>
-            <button type="button" onClick={() => setForgot((v) => !v)} aria-expanded={forgot} aria-controls="forgot-help"
-              className="min-h-9 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline">
-              ¿Olvidaste tu contraseña?
-            </button>
+            <label htmlFor="password" className="text-[19px]">Contraseña</label>
           </div>
-          <div className="relative mt-1.5">
+          <div className="relative mt-1">
             <input
               ref={passRef} id="password" name="password" type={show ? "text" : "password"}
               autoComplete="current-password" required value={password}
               onChange={(e) => setPassword(e.target.value)} onKeyUp={checkCaps} onKeyDown={checkCaps}
               onBlur={() => setCaps(false)} aria-describedby={caps ? "caps-warning" : undefined}
-              className="block h-12 w-full rounded-lg border border-stone-300 bg-white pl-3.5 pr-12 text-[16px] outline-none transition-[border-color,box-shadow] focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              className={`${field} pr-12`}
             />
             <button type="button" onClick={() => { setShow((v) => !v); passRef.current?.focus(); }}
               aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={show}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-stone-500 hover:text-stone-800">
-              {show ? <EyeOff size={19} aria-hidden /> : <Eye size={19} aria-hidden />}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[rgb(244_241_230/0.75)] hover:text-[var(--chalk)]">
+              {show ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
             </button>
           </div>
           {caps && (
-            <p id="caps-warning" className="mt-1.5 text-sm font-medium text-amber-800">Bloq Mayús está activado.</p>
+            <p id="caps-warning" className="mt-1.5 text-[16px] text-[var(--chalk-yellow)]">Ojo: Bloq Mayús está activado.</p>
           )}
         </div>
 
-        {forgot && (
-          <div id="forgot-help" className="rounded-lg border border-stone-200 bg-stone-50 p-4 text-sm text-stone-700">
-            <p className="flex items-center gap-2 font-semibold text-stone-900"><KeyRound size={16} aria-hidden /> Restablecer la contraseña</p>
-            <ol className="mt-2 list-decimal space-y-1.5 pl-5">
-              <li>Entrá a <a href="https://dashboard.render.com" target="_blank" rel="noreferrer" className="font-semibold text-brand-700 underline underline-offset-2">dashboard.render.com</a> y abrí el servicio <strong>dietetica-api</strong>.</li>
-              <li>En <strong>Environment</strong>, cambiá el valor de <code className="rounded bg-white px-1 py-0.5 text-[13px] ring-1 ring-stone-200">ADMIN_PASSWORD</code> por una contraseña nueva.</li>
-              <li>Tocá <strong>Save, rebuild and deploy</strong> y esperá 2 o 3 minutos.</li>
-              <li>Entrá acá con la contraseña nueva. Por seguridad se cierran las sesiones abiertas.</li>
-            </ol>
-          </div>
-        )}
-
-        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-[15px]">
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 text-[18px]">
           <input id="remember" type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
-            className="mt-0.5 size-5 shrink-0 accent-brand-700" />
+            className="mt-1 size-5 shrink-0 accent-[var(--chalk-yellow)]" />
           <span>
             Mantener la sesión iniciada
-            <span className="block text-sm text-stone-500">Desmarcalo si la compu o el celular no es tuyo.</span>
+            <span className="block font-[family-name:var(--font-condensed)] text-[14px] text-[rgb(244_241_230/0.7)]">Desmarcalo si la compu o el celular no es tuyo.</span>
           </span>
         </label>
 
         <button disabled={busy}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-700 font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 disabled:cursor-wait disabled:opacity-80">
-          {busy ? <><LoaderCircle size={18} className="animate-spin" aria-hidden /> Entrando…</> : <>Entrar <ArrowRight size={18} aria-hidden /></>}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[var(--chalk-yellow)] text-[22px] font-bold text-[var(--board)] transition-colors hover:bg-[#fff3a6] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgb(243_227_124/0.35)] disabled:cursor-wait disabled:opacity-80">
+          {busy ? <><LoaderCircle size={20} className="animate-spin" aria-hidden /> Entrando…</> : <>¡Entrar! <ArrowRight size={20} aria-hidden /></>}
         </button>
         {slow && (
-          <p role="status" className="text-center text-sm text-stone-500">
+          <p role="status" className="text-center font-[family-name:var(--font-condensed)] text-[14px] text-[rgb(244_241_230/0.75)]">
             El servidor se está despertando después de un rato sin uso. Puede tardar hasta un minuto.
           </p>
+        )}
+
+        <div className="text-center">
+          <button type="button" onClick={() => setForgot((v) => !v)} aria-expanded={forgot} aria-controls="forgot-help"
+            className="min-h-11 text-[18px] text-[var(--chalk-yellow)] underline-offset-4 hover:underline">
+            ¿Te olvidaste la contraseña?
+          </button>
+        </div>
+        {forgot && (
+          <div id="forgot-help" className="rounded-lg bg-black/20 p-4 font-[family-name:var(--font-condensed)] text-[15px] text-[var(--chalk)]">
+            <p className="flex items-center gap-2 font-bold"><KeyRound size={16} aria-hidden /> Restablecer la contraseña</p>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5">
+              <li>Entrá a <a href="https://dashboard.render.com" target="_blank" rel="noreferrer" className="font-bold text-[var(--chalk-yellow)] underline underline-offset-2">dashboard.render.com</a> y abrí el servicio <strong>dietetica-api</strong>.</li>
+              <li>En <strong>Environment</strong>, cambiá el valor de <code className="rounded bg-black/25 px-1 py-0.5 text-[13px]">ADMIN_PASSWORD</code> por una contraseña nueva.</li>
+              <li>Tocá <strong>Save, rebuild and deploy</strong> y esperá 2 o 3 minutos.</li>
+              <li>Entrá acá con la contraseña nueva. Por seguridad se cierran las sesiones abiertas.</li>
+            </ol>
+          </div>
         )}
       </form>
     </div>
   );
 }
 
-function today() {
-  const s = new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 export default function LoginPage() {
-  const [date, setDate] = useState("");
-  useEffect(() => setDate(today()), []);
-
   return (
-    <main className="grid min-h-dvh grid-rows-[auto_1fr] bg-white md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:grid-rows-1">
-      {/* Marca: renglones como una lista de precios */}
-      <section
-        className="relative overflow-hidden bg-brand-700 px-6 pb-8 pt-[calc(env(safe-area-inset-top)+28px)] text-white md:flex md:flex-col md:justify-between md:px-12 md:py-12"
-        style={{ backgroundImage: "repeating-linear-gradient(to bottom, transparent 0 39px, rgb(255 255 255 / 0.09) 39px 40px)" }}
-      >
-        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-white/70">Dietética</p>
-        <div className="mt-3 md:mt-0">
-          <p className="font-[family-name:var(--font-condensed)] text-[44px] font-bold leading-[0.95] md:text-[72px]">
-            Panel de{" "}
-            <span className="bg-[linear-gradient(transparent_80%,var(--color-highlight)_80%,var(--color-highlight)_94%,transparent_94%)] px-1 text-white [box-decoration-break:clone]">
-              gestión
-            </span>
-          </p>
-          <p className="mt-4 hidden max-w-sm text-[17px] leading-relaxed text-white/85 md:block">
-            Pedidos, productos, precios y ventas de la tienda en un solo lugar.
-          </p>
+    <main className="min-h-dvh bg-[var(--wood)] p-3 pt-[calc(env(safe-area-inset-top)+12px)] md:p-[22px]">
+      {/* Pizarrón con marco de madera */}
+      <div className="grid min-h-[calc(100dvh-24px-env(safe-area-inset-top))] items-center gap-6 rounded-md px-5 py-8 shadow-[inset_0_0_0_3px_var(--wood-dark),inset_0_0_60px_rgb(0_0_0/0.35)] md:min-h-[calc(100dvh-44px)] md:grid-cols-[minmax(0,1fr)_minmax(0,460px)] md:gap-16 md:px-[clamp(32px,6vw,88px)] md:py-12"
+        style={{ backgroundColor: "var(--board)", backgroundImage: "radial-gradient(rgba(255,255,255,.035) 1px,transparent 2px),radial-gradient(rgba(255,255,255,.025) 1px,transparent 2px)", backgroundSize: "9px 9px,13px 13px" }}>
+        <div className="flex flex-col gap-3 md:gap-5">
+          <p className="font-[family-name:var(--font-chalk)] text-[56px] font-bold leading-[0.9] md:text-[92px]">Panel de la<br />dietética</p>
+          <svg aria-hidden="true" viewBox="0 0 360 18" className="h-[14px] w-[220px] md:h-[18px] md:w-[360px]" fill="none">
+            <path d="M4 12 C 80 2, 160 16, 236 7 S 340 10, 356 6" stroke="var(--chalk-yellow)" strokeWidth="5" strokeLinecap="round" />
+          </svg>
+          <ul className="hidden list-none flex-col gap-1.5 p-0 font-[family-name:var(--font-hand)] text-[24px] md:flex">
+            <li>· Pedidos del día</li>
+            <li>· Precios y stock</li>
+            <li>· Importar la lista del proveedor</li>
+            <li>· Resumen de ventas</li>
+          </ul>
         </div>
-        <p className="mt-4 hidden text-sm text-white/70 md:block" suppressHydrationWarning>{date}</p>
-      </section>
-
-      <section className="flex items-start justify-center px-6 py-10 md:items-center md:px-12">
-        <Suspense>
-          <LoginForm />
-        </Suspense>
-      </section>
+        <div className="w-full justify-self-center md:max-w-[460px]">
+          <Suspense>
+            <LoginForm />
+          </Suspense>
+        </div>
+      </div>
     </main>
   );
 }

@@ -34,29 +34,97 @@
   contain-intrinsic-size: auto 420px;
 }
 
-/* Panel de gestión: grises fríos y Barlow, sin tocar cada componente */
+/* Panel de gestión: diseño "Pizarra". Se reasignan los colores de Tailwind dentro de
+   .admin-theme, así cada pantalla toma el pizarrón sin tocar sus clases:
+   - stone (grises) queda invertido: 900 = tiza, 100 = pizarrón;
+   - white = tarjetas y campos (un verde un poco más claro que el fondo);
+   - brand = tiza amarilla (botones y lo importante); red = tiza rosada; emerald = tiza verde. */
 .admin-theme {
-  --color-stone-50: #f7f8fb;
-  --color-stone-100: #f2f4f8;
-  --color-stone-200: #e1e5ee;
-  --color-stone-300: #c5ccdc;
-  --color-stone-400: #9aa3ba;
-  --color-stone-500: #646d8a;
-  --color-stone-600: #4a5370;
-  --color-stone-700: #363e5a;
-  --color-stone-800: #252c45;
-  --color-stone-900: #141b33;
-  font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
-  color: var(--color-stone-900);
+  --board: #263a32;
+  --board-card: #2d443a;
+  --chalk: #f4f1e6;
+  --chalk-yellow: #f3e37c;
+  --wood: #8a5a35;
+  --wood-dark: #6e4628;
+
+  --color-white: var(--board-card);
+  --color-stone-50: #2a4037;
+  --color-stone-100: #263a32;
+  --color-stone-200: #456157;
+  --color-stone-300: #6f8a7e;
+  --color-stone-400: #9db2a8;
+  --color-stone-500: #c3d0c9;
+  --color-stone-600: #d4ddd8;
+  --color-stone-700: #e2e8e4;
+  --color-stone-800: #eceeea;
+  --color-stone-900: #f4f1e6;
+
+  --color-brand-50: #3b4c35;
+  --color-brand-100: #6b6a3c;
+  --color-brand-600: #f3e37c;
+  --color-brand-700: #f3e37c;
+  --color-brand-900: #fff3a6;
+  --color-highlight: #f3e37c;
+
+  --color-red-50: #4a3632;
+  --color-red-100: #573c36;
+  --color-red-200: #8a5a50;
+  --color-red-300: #b06e60;
+  --color-red-500: #f2a38f;
+  --color-red-600: #f2a38f;
+  --color-red-700: #f2a38f;
+  --color-red-800: #f6b9a9;
+  --color-red-900: #f8c7ba;
+
+  --color-emerald-50: #2f4c3c;
+  --color-emerald-100: #33553f;
+  --color-emerald-200: #4f8063;
+  --color-emerald-300: #6aa17f;
+  --color-emerald-700: #8fd1a8;
+  --color-emerald-900: #b8e6c9;
+
+  --color-amber-50: #48452d;
+  --color-amber-100: #575233;
+  --color-amber-300: #9a8d4a;
+  --color-amber-800: #f3e37c;
+  --color-amber-900: #f7eba3;
+
+  --color-sky-100: #2f4a57;
+  --color-sky-300: #5f8aa3;
+  --color-sky-900: #bfe0f2;
+
+  --font-condensed: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  --font-chalk: "Caveat", "Kalam", cursive;
+  --font-hand: "Kalam", "Caveat", cursive;
+
+  font-family: "Atkinson Hyperlegible", ui-sans-serif, system-ui, sans-serif;
+  color: var(--chalk);
+  color-scheme: dark;
+  background-color: var(--board);
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 2px),
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 2px);
+  background-size: 9px 9px, 13px 13px;
 }
 .admin-theme h1,
 .admin-theme h2 {
-  font-family: var(--font-condensed);
+  font-family: var(--font-chalk);
   font-weight: 700;
-  letter-spacing: 0.005em;
+  letter-spacing: 0;
 }
-.admin-theme h1 { font-size: 2.25rem; line-height: 1.05; }
-.admin-theme h2 { font-size: 1.4rem; }
+.admin-theme h1 { font-size: 3rem; line-height: 0.95; }
+.admin-theme h2 { font-size: 1.9rem; line-height: 1; }
+/* Tarjetas: recuadros dibujados con tiza */
+.admin-theme .rounded-xl.bg-white,
+.admin-theme .rounded-2xl.bg-white {
+  box-shadow: none;
+  border: 2px dashed rgba(244, 241, 230, 0.28);
+}
+/* Botones principales (tiza amarilla): texto oscuro, letra a mano */
+.admin-theme .bg-brand-700 { color: var(--board); }
+.admin-theme button.bg-brand-700,
+.admin-theme a.bg-brand-700 { font-family: var(--font-hand); font-weight: 700; font-size: 1.05rem; }
+.admin-theme ::placeholder { color: var(--color-stone-400); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }

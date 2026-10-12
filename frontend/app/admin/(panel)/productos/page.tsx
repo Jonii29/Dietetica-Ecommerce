@@ -159,7 +159,7 @@ export default function ProductsPage() {
               </div>
               <div className="mt-3 divide-y divide-stone-100">
                 {p.variants.map((v) => (
-                  <div key={v.sku} className={`grid grid-cols-[minmax(0,1fr)_7rem_6rem] items-center gap-2 py-2 ${!v.is_active ? "text-stone-400" : ""} ${v.stock != null && v.stock <= LOW ? "-mx-2 rounded-lg bg-[#FFFBE0] px-2" : ""}`}>
+                  <div key={v.sku} className={`grid grid-cols-[minmax(0,1fr)_7rem_6rem] items-center gap-2 py-2 ${!v.is_active ? "text-stone-400" : ""} ${v.stock != null && v.stock <= LOW ? "-mx-2 rounded-lg bg-amber-50 px-2" : ""}`}>
                     <div className="min-w-0">
                       <p className="text-stone-800">{v.label}</p>
                       <p className="truncate text-xs text-stone-400">{v.sku}{!v.is_active && " · inactiva"}</p>
@@ -193,7 +193,7 @@ export default function ProductsPage() {
             <tbody>
               {visible.map((p) =>
                 p.variants.map((v, i) => (
-                  <tr key={v.sku} className={`${i === 0 ? "border-t border-stone-200" : ""} ${!p.is_active || !v.is_active ? "text-stone-400" : ""} ${v.stock != null && v.stock <= LOW ? "bg-[#FFFBE0]" : ""}`}>
+                  <tr key={v.sku} className={`${i === 0 ? "border-t border-stone-200" : ""} ${!p.is_active || !v.is_active ? "text-stone-400" : ""} ${v.stock != null && v.stock <= LOW ? "bg-amber-50" : ""}`}>
                     {i === 0 && (
                       <td rowSpan={p.variants.length} className="px-4 py-2 align-top">
                         <p className="font-medium text-stone-900">{p.name}</p>

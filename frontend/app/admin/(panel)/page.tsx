@@ -121,7 +121,7 @@ function Kpi({ label, value, highlight }: { label: string; value: string; highli
     <div className="rounded-xl bg-white p-4">
       <p className="text-sm font-medium text-stone-600">{label}</p>
       <p className="mt-1 font-[family-name:var(--font-condensed)] text-3xl font-bold tabular-nums md:text-4xl">
-        <span className={highlight ? "bg-highlight px-1" : ""}>{value}</span>
+        <span className={highlight ? "text-[var(--chalk-yellow)]" : ""}>{value}</span>
       </p>
     </div>
   );
