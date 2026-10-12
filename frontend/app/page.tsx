@@ -1,5 +1,6 @@
 import { CatalogSearch } from "@/components/CatalogSearch";
 import { CartDrawer } from "@/components/CartDrawer";
+import { WaitForStore } from "@/components/WaitForStore";
 import { getCatalog, STORE_NAME, WHATSAPP_NUMBER } from "@/lib/api";
 
 // Se arma en cada visita (el catálogo queda cacheado 60 s), así el build no necesita el backend.
@@ -17,15 +18,7 @@ export default async function HomePage() {
   try {
     catalog = await getCatalog();
   } catch {
-    return (
-      <main className="grid min-h-dvh place-items-center p-6 text-center">
-        <div className="max-w-md">
-          <p className="font-display text-3xl font-extrabold">{STORE_NAME}</p>
-          <p className="mt-3 text-ink-soft">Estamos preparando la tienda. Volvé a cargar la página en unos segundos.</p>
-          <a href="/" className="mt-6 inline-flex min-h-11 items-center rounded-full bg-ink px-6 font-bold text-white">Volver a cargar</a>
-        </div>
-      </main>
-    );
+    return <WaitForStore storeName={STORE_NAME} />;
   }
 
   return (

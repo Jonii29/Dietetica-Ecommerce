@@ -30,9 +30,10 @@ async function ping(timeoutMs: number): Promise<boolean> {
 /** Espera a que el backend esté despierto (hasta `maxMs`). Comparte la espera entre requests. */
 export function ensureBackendAwake(maxMs = 90_000, force = false): Promise<boolean> {
   if (!force && Date.now() - lastOkAt < 60_000) return Promise.resolve(true);
-  if (waking) return waking;
+  const giveUp = new Promise<boolean>((r) => setTimeout(() => r(false), maxMs));
+  if (waking) return Promise.race([waking, giveUp]);
   waking = (async () => {
-    const deadline = Date.now() + maxMs;
+    const deadline = Date.now() + Math.max(maxMs, 90_000);
     let delay = 1500;
     while (Date.now() < deadline) {
       if (await ping(Math.min(20_000, deadline - Date.now()))) {
@@ -44,7 +45,7 @@ export function ensureBackendAwake(maxMs = 90_000, force = false): Promise<boole
     }
     return false;
   })().finally(() => { waking = null; });
-  return waking;
+  return Promise.race([waking, giveUp]);
 }
 
 export function markBackendOk() {

@@ -1,5 +1,5 @@
-/** Al arrancar el servidor de la tienda (p. ej. al despertar en Render) despierta también al
- *  backend, así para cuando el navegador pide datos ya está listo. */
+/** Al arrancar el servidor de la tienda intenta despertar también al backend. (En Render
+ *  gratis esto no siempre alcanza: el navegador lo despierta también, ver WakeBackend.) */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { ensureBackendAwake } = await import("./lib/backendWake");
