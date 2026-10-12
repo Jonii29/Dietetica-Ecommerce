@@ -12,14 +12,12 @@ import { useEffect } from "react";
 export function WakeBackend({ url }: { url: string }) {
   useEffect(() => {
     if (!url) return;
-    const ping = () => {
-      if (document.visibilityState !== "visible") return;
-      fetch(`${url}/health`, { mode: "no-cors", cache: "no-store", keepalive: true }).catch(() => {});
-    };
-    ping();
-    const id = setInterval(ping, 5 * 60_000);
-    document.addEventListener("visibilitychange", ping);
-    return () => { clearInterval(id); document.removeEventListener("visibilitychange", ping); };
+    const knock = () => { fetch(`${url}/health`, { mode: "no-cors", cache: "no-store" }).catch(() => {}); };
+    const ifVisible = () => { if (document.visibilityState === "visible") knock(); };
+    knock(); // siempre al abrir la página
+    const id = setInterval(ifVisible, 5 * 60_000);
+    document.addEventListener("visibilitychange", ifVisible);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", ifVisible); };
   }, [url]);
   return null;
 }
