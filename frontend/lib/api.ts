@@ -9,6 +9,9 @@ export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
 
 /** Server Component: catálogo completo, cacheado 60 s en el servidor de Next (o hasta revalidateTag). */
 export async function getCatalog(): Promise<Catalog> {
+  // Si Render durmió el backend, esperamos a que arranque en vez de mostrar un error
+  const { ensureBackendAwake } = await import("./backendWake");
+  await ensureBackendAwake(70_000);
   const res = await fetch(`${backendUrl()}/api/catalog`, {
     next: { revalidate: 60, tags: ["catalog"] },
     signal: AbortSignal.timeout(60_000), // en el plan gratis de Render el backend tarda ~50 s en despertar
