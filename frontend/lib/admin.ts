@@ -19,7 +19,7 @@ export async function adminFetch<T>(path: string, init: RequestInit = {}): Promi
     headers: isForm ? init.headers : { "Content-Type": "application/json", ...init.headers },
   });
   if (res.status === 401 && !path.startsWith("/login")) {
-    window.location.href = `/admin/login?next=${encodeURIComponent(window.location.pathname)}`;
+    window.location.href = `/admin/login?motivo=vencida&next=${encodeURIComponent(window.location.pathname)}`;
     throw new AdminError("Sesión vencida", 401);
   }
   if (!res.ok) {

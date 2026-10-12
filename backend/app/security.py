@@ -16,7 +16,7 @@ from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Cookie, Depends, Header, HTTPException, Request
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from .config import get_settings
@@ -71,16 +71,30 @@ def _aware(dt: datetime) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
-def create_session(db: Session, user: AdminUser) -> str:
+def session_length(remember: bool) -> timedelta:
+    return timedelta(days=settings.session_days) if remember else timedelta(hours=settings.session_hours_short)
+
+
+def create_session(db: Session, user: AdminUser, remember: bool = True) -> str:
     token = secrets.token_urlsafe(32)
     db.execute(delete(AdminSession).where(AdminSession.expires_at < _now()))  # limpieza
     db.add(AdminSession(
         token_hash=_hash_token(token), user_id=user.id,
-        expires_at=_now() + timedelta(days=settings.session_days),
+        expires_at=_now() + session_length(remember),
     ))
     user.last_login_at = _now()
     db.commit()
     return token
+
+
+def destroy_other_sessions(db: Session, user: AdminUser, keep_token: str | None = None) -> int:
+    """Cierra las sesiones del usuario en los demás dispositivos (o en todos si keep_token es None)."""
+    q = delete(AdminSession).where(AdminSession.user_id == user.id)
+    if keep_token:
+        q = q.where(AdminSession.token_hash != _hash_token(keep_token))
+    n = db.execute(q).rowcount or 0
+    db.commit()
+    return n
 
 
 def destroy_session(db: Session, token: str | None) -> None:
@@ -98,11 +112,12 @@ def user_from_token(db: Session, token: str | None) -> AdminUser | None:
     return sess.user
 
 
-def cookie_kwargs() -> dict:
-    return {
-        "key": COOKIE_NAME, "httponly": True, "samesite": "lax", "secure": settings.cookie_secure,
-        "max_age": settings.session_days * 86400, "path": "/",
-    }
+def cookie_kwargs(remember: bool = True) -> dict:
+    """Con "mantener sesión" la cookie dura 30 días; sin eso se borra al cerrar el navegador."""
+    kw = {"key": COOKIE_NAME, "httponly": True, "samesite": "lax", "secure": settings.cookie_secure, "path": "/"}
+    if remember:
+        kw["max_age"] = int(session_length(True).total_seconds())
+    return kw
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +159,8 @@ def check_login_rate(request: Request) -> None:
     while q and now - q[0] > _WINDOW:
         q.popleft()
     if len(q) >= _MAX_ATTEMPTS:
-        raise HTTPException(429, "Demasiados intentos. Esperá unos minutos y probá de nuevo.")
+        wait = max(1, round((_WINDOW - (now - q[0])) / 60))
+        raise HTTPException(429, f"Demasiados intentos seguidos. Esperá {wait} {'minuto' if wait == 1 else 'minutos'} y probá de nuevo.")
     q.append(now)
 
 
@@ -157,8 +173,28 @@ def reset_login_rate(request: Request) -> None:
 # ---------------------------------------------------------------------------
 
 def ensure_initial_admin(db: Session) -> None:
-    """Si no hay usuarios y ADMIN_PASSWORD está definida, crea el primero."""
-    if db.scalar(select(AdminUser.id).limit(1)) is not None or not settings.admin_password:
+    """Sincroniza el usuario del panel con ADMIN_USER / ADMIN_PASSWORD (variables de Render).
+
+    * Si no existe, lo crea.
+    * Si ADMIN_PASSWORD cambió desde la última vez que se aplicó, restablece la contraseña y
+      cierra todas las sesiones: es la forma de recuperar el acceso si te olvidás la clave.
+    * Si la clave se cambió desde el panel y la variable sigue igual, no se toca.
+    """
+    password = settings.admin_password
+    if not password:
         return
-    db.add(AdminUser(username=settings.admin_user.strip().lower(), password_hash=hash_password(settings.admin_password)))
+    name = settings.admin_user.strip().lower()
+    user = db.scalar(select(AdminUser).where(func.lower(AdminUser.username) == name))
+    if user is None:
+        h = hash_password(password)
+        db.add(AdminUser(username=name, password_hash=h, env_password_hash=h))
+        db.commit()
+        return
+    if user.env_password_hash and verify_password(password, user.env_password_hash):
+        return  # la variable no cambió
+    h = hash_password(password)
+    user.password_hash = h
+    user.env_password_hash = h
+    user.is_active = True
+    db.execute(delete(AdminSession).where(AdminSession.user_id == user.id))
     db.commit()

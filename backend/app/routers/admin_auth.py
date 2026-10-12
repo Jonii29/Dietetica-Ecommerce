@@ -1,16 +1,18 @@
 """Login / logout del panel de gestión."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..admin_schemas import AdminMe, LoginIn, PasswordChange
 from ..database import get_db
-from ..models import AdminUser
+from ..models import AdminSession, AdminUser
 from ..security import (
-    COOKIE_NAME, check_login_rate, cookie_kwargs, create_session, destroy_session, hash_password,
-    require_admin, reset_login_rate, verify_password,
+    COOKIE_NAME, check_login_rate, cookie_kwargs, create_session, destroy_other_sessions,
+    destroy_session, hash_password, require_admin, reset_login_rate, verify_password,
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin: sesión"])
@@ -28,8 +30,8 @@ def login(data: LoginIn, request: Request, response: Response, db: Session = Dep
     if not user or not ok or not user.is_active:
         raise HTTPException(401, "Usuario o contraseña incorrectos.")
     reset_login_rate(request)
-    response.set_cookie(value=create_session(db, user), **cookie_kwargs())
-    return AdminMe(username=user.username)
+    response.set_cookie(value=create_session(db, user, remember=data.remember), **cookie_kwargs(data.remember))
+    return _me(db, user)
 
 
 @router.post("/logout", status_code=204)
@@ -38,14 +40,36 @@ def logout(response: Response, token: str | None = Cookie(None, alias=COOKIE_NAM
     response.delete_cookie(COOKIE_NAME, path="/")
 
 
+@router.post("/logout-all", status_code=204)
+def logout_all(response: Response, user: AdminUser | None = Depends(require_admin), db: Session = Depends(get_db)):
+    """Cierra la sesión en todos los dispositivos, incluido este."""
+    if user is not None:
+        destroy_other_sessions(db, user)
+    response.delete_cookie(COOKIE_NAME, path="/")
+
+
+def _me(db: Session, user: AdminUser) -> AdminMe:
+    n = db.scalar(select(func.count(AdminSession.id)).where(
+        AdminSession.user_id == user.id, AdminSession.expires_at > datetime.now(timezone.utc))) or 0
+    return AdminMe(username=user.username, last_login_at=user.last_login_at, sessions=n)
+
+
 @router.get("/me", response_model=AdminMe)
-def me(user: AdminUser | None = Depends(require_admin)):
-    return AdminMe(username=user.username if user else "script")
+def me(user: AdminUser | None = Depends(require_admin), db: Session = Depends(get_db)):
+    return _me(db, user) if user else AdminMe(username="script")
 
 
 @router.post("/password", status_code=204)
-def change_password(data: PasswordChange, user: AdminUser | None = Depends(require_admin), db: Session = Depends(get_db)):
+def change_password(
+    data: PasswordChange,
+    user: AdminUser | None = Depends(require_admin),
+    token: str | None = Cookie(None, alias=COOKIE_NAME),
+    db: Session = Depends(get_db),
+):
     if user is None or not verify_password(data.current_password, user.password_hash):
         raise HTTPException(400, "La contraseña actual no es correcta.")
+    if data.new_password == data.current_password:
+        raise HTTPException(400, "La contraseña nueva tiene que ser distinta de la actual.")
     user.password_hash = hash_password(data.new_password)
     db.commit()
+    destroy_other_sessions(db, user, keep_token=token)  # los otros dispositivos tienen que volver a entrar

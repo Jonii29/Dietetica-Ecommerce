@@ -43,11 +43,20 @@ Después entrá a http://localhost:3000/admin. Secciones:
 | **Productos** | precio y stock editables directo en la tabla, ocultar/mostrar, alta y edición con presentaciones y etiquetas |
 | **Importar** | sube Excel/CSV, muestra una vista previa con errores por fila y recién guarda al confirmar |
 
+Inicio de sesión: ver/ocultar contraseña, aviso de Bloq Mayús, "Mantener la sesión iniciada"
+(30 días; si se desmarca, la sesión se cierra al cerrar el navegador y dura como máximo 12 h) y
+aviso cuando el servidor gratis de Render está despertando. En **Mi cuenta** se cambia la
+contraseña (cierra la sesión en los otros dispositivos) y se puede cerrar la sesión en todos lados.
+
+**¿Te olvidaste la contraseña?** En Render → `dietetica-api` → Environment cambiá `ADMIN_PASSWORD`
+y redeployá: al arrancar, si la variable cambió, se restablece la contraseña de `ADMIN_USER` y se
+cierran todas las sesiones. Si la variable no cambia, se respeta la clave elegida en el panel.
+
 Seguridad: contraseña con scrypt, sesión en cookie HttpOnly guardada en la base (cerrar sesión
 la invalida), límite de intentos de login. El frontend reenvía `/api/*` al backend (ver
 `next.config.ts`), así la cookie queda en el mismo dominio. En producción con HTTPS poné
-`COOKIE_SECURE=true`. Variables: `ADMIN_USER`/`ADMIN_PASSWORD` (crea el primer usuario al
-arrancar si no hay ninguno), `SESSION_DAYS`, `LOW_STOCK` (umbral de stock bajo, 5 por defecto).
+`COOKIE_SECURE=true`. Variables: `ADMIN_USER`/`ADMIN_PASSWORD`, `SESSION_DAYS` (30),
+`SESSION_HOURS_SHORT` (12), `LOW_STOCK` (umbral de stock bajo, 5 por defecto).
 
 ## Publicar en Render
 

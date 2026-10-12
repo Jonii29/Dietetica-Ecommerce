@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ExternalLink, LogOut } from "lucide-react";
+import { ExternalLink, LogOut, UserRound } from "lucide-react";
 import { adminFetch } from "@/lib/admin";
 
 const NAV = [
@@ -24,7 +24,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   async function logout() {
     await adminFetch("/logout", { method: "POST" }).catch(() => {});
-    router.replace("/admin/login");
+    router.replace("/admin/login?motivo=salio");
   }
 
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
@@ -37,7 +37,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             Dietética · gestión
           </Link>
           <div className="ml-auto flex items-center gap-1 text-sm">
-            {user && <span className="mr-2 hidden text-white/80 sm:inline">{user}</span>}
+            <Link href="/admin/cuenta" aria-label="Mi cuenta" aria-current={pathname.startsWith("/admin/cuenta") ? "page" : undefined}
+              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg px-2.5 font-semibold text-white hover:bg-white/10 aria-[current=page]:bg-white/15">
+              <UserRound size={15} aria-hidden /> <span className="hidden sm:inline">{user ?? "Mi cuenta"}</span>
+            </Link>
             <a href="/" target="_blank" className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg px-2.5 font-semibold text-white hover:bg-white/10">
               <ExternalLink size={15} aria-hidden /> <span className="hidden sm:inline">Ver tienda</span>
             </a>

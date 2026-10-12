@@ -53,6 +53,7 @@ def init_db() -> None:
 # producción conviene pasar a Alembic.)
 _NEW_COLUMNS = {
     "orders": {"stock_applied": "BOOLEAN NOT NULL DEFAULT FALSE"},  # FALSE vale en SQLite y PostgreSQL
+    "admin_users": {"env_password_hash": "VARCHAR(200)"},
 }
 
 

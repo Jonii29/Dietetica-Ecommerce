@@ -215,6 +215,9 @@ class AdminUser(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Hash de la última ADMIN_PASSWORD aplicada desde Render: si la variable cambia, la
+    # contraseña se restablece (así se recupera el acceso sin email).
+    env_password_hash: Mapped[str | None] = mapped_column(String(200))
 
 
 class AdminSession(Base):

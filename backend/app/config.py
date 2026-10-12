@@ -34,9 +34,12 @@ class Settings:
     admin_token: str = os.getenv("ADMIN_TOKEN", "")  # opcional: acceso por header para scripts/curl
 
     # Panel de gestión
-    admin_user: str = os.getenv("ADMIN_USER", "admin")          # se crea solo si no hay usuarios
-    admin_password: str = os.getenv("ADMIN_PASSWORD", "")       # y si esta variable tiene valor
-    session_days: int = int(os.getenv("SESSION_DAYS", "7"))
+    admin_user: str = os.getenv("ADMIN_USER", "admin")
+    # Contraseña del panel. Crea el usuario la primera vez y, si después se cambia el valor en
+    # Render, restablece la contraseña (recuperación de acceso).
+    admin_password: str = os.getenv("ADMIN_PASSWORD", "")
+    session_days: int = int(os.getenv("SESSION_DAYS", "30"))    # "Mantener sesión iniciada"
+    session_hours_short: int = int(os.getenv("SESSION_HOURS_SHORT", "12"))  # sin "mantener"
     cookie_secure: bool = os.getenv("COOKIE_SECURE", "false").lower() == "true"  # true con HTTPS
     low_stock: int = int(os.getenv("LOW_STOCK", "5"))
     store_tz: str = os.getenv("STORE_TZ", "America/Argentina/Buenos_Aires")

@@ -13,10 +13,13 @@ from .schemas import ORM, OrderItemOut, TagOut
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=60)
     password: str = Field(min_length=1, max_length=200)
+    remember: bool = True   # "Mantener la sesión iniciada"
 
 
 class AdminMe(BaseModel):
     username: str
+    last_login_at: datetime | None = None   # último inicio de sesión
+    sessions: int = 1                       # dispositivos con sesión abierta
 
 
 class PasswordChange(BaseModel):
